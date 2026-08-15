@@ -170,8 +170,9 @@ export function MapField() {
         renderer.domElement.setAttribute("role", "img");
         renderer.domElement.setAttribute(
           "aria-label",
-          "A circular three-dimensional contour route map with compass bearings and elevated points of interest",
+          "A circular three-dimensional contour route map with compass bearings and elevated points of interest. Scroll to zoom.",
         );
+        renderer.domElement.tabIndex = 0;
         host.appendChild(renderer.domElement);
 
         const instrument = new THREE.Group();
@@ -455,6 +456,8 @@ export function MapField() {
         scene.add(hemisphere, key, fill);
 
         const lookAt = new THREE.Vector3(0, 0.22, 0);
+        let targetZoom = 1;
+        let currentZoom = 1;
         const resize = () => {
           const width = host.clientWidth;
           const height = host.clientHeight;
@@ -483,16 +486,51 @@ export function MapField() {
           );
         };
         const onPointerLeave = () => pointerTarget.set(0, 0);
+        const applyZoom = (delta: number) => {
+          targetZoom = THREE.MathUtils.clamp(
+            targetZoom * Math.exp(-delta * 0.00145),
+            0.78,
+            2.8,
+          );
+        };
+        const onWheel = (event: WheelEvent) => {
+          event.preventDefault();
+          const multiplier = event.deltaMode === 1
+            ? 16
+            : event.deltaMode === 2
+              ? window.innerHeight
+              : 1;
+          applyZoom(event.deltaY * multiplier);
+          if (reducedMotion) render();
+        };
+        const onKeyDown = (event: KeyboardEvent) => {
+          if (!["+", "=", "-", "_"].includes(event.key)) return;
+          event.preventDefault();
+          applyZoom(event.key === "+" || event.key === "=" ? -90 : 90);
+          if (reducedMotion) render();
+        };
         host.addEventListener("pointermove", onPointerMove, { passive: true });
         host.addEventListener("pointerleave", onPointerLeave);
+        renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
+        renderer.domElement.addEventListener("keydown", onKeyDown);
 
         const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         const startTime = window.performance.now();
         let animationFrame = 0;
+        let lastTime = startTime;
 
-        const render = () => {
-          const elapsed = reducedMotion ? 4.2 : (window.performance.now() - startTime) / 1000;
+        const render = (now = window.performance.now()) => {
+          const delta = Math.min(0.05, Math.max(0.001, (now - lastTime) / 1000));
+          lastTime = now;
+          const elapsed = reducedMotion ? 4.2 : (now - startTime) / 1000;
           pointer.lerp(pointerTarget, 0.04);
+          currentZoom = THREE.MathUtils.lerp(
+            currentZoom,
+            targetZoom,
+            reducedMotion ? 1 : 1 - Math.exp(-10 * delta),
+          );
+          camera.zoom = currentZoom;
+          camera.updateProjectionMatrix();
           mapGroup.rotation.y = Math.sin(elapsed * 0.28) * 0.055 + pointer.x * 0.055;
           mapGroup.rotation.x = pointer.y * 0.012;
 
@@ -513,6 +551,8 @@ export function MapField() {
           resizeObserver.disconnect();
           host.removeEventListener("pointermove", onPointerMove);
           host.removeEventListener("pointerleave", onPointerLeave);
+          renderer.domElement.removeEventListener("wheel", onWheel);
+          renderer.domElement.removeEventListener("keydown", onKeyDown);
           disposableGeometries.forEach((geometry) => geometry.dispose());
           disposableMaterials.forEach((material) => material.dispose());
           disposableTextures.forEach((texture) => texture.dispose());

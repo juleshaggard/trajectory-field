@@ -85,7 +85,7 @@ export function DrumField() {
         renderer.domElement.setAttribute("role", "img");
         renderer.domElement.setAttribute(
           "aria-label",
-          "Interactive three-dimensional radial instrument drum. Move the pointer to tilt, drag to spin, or use the mouse wheel and arrow keys.",
+          "Interactive three-dimensional radial instrument drum. Move the pointer to tilt, drag or use arrow keys to spin, and scroll to zoom.",
         );
         host.appendChild(renderer.domElement);
 
@@ -313,6 +313,8 @@ export function DrumField() {
         const pointer = { down: false, x: 0, y: 0 };
         let spin = -0.22;
         let velocity = 0;
+        let targetZoom = 1;
+        let currentZoom = 1;
         let animationFrame = 0;
         let lastTime = window.performance.now();
 
@@ -355,13 +357,30 @@ export function DrumField() {
         };
         const onWheel = (event: WheelEvent) => {
           event.preventDefault();
-          velocity = THREE.MathUtils.clamp(velocity + event.deltaY * 0.006, -6.5, 6.5);
+          const multiplier = event.deltaMode === 1
+            ? 16
+            : event.deltaMode === 2
+              ? window.innerHeight
+              : 1;
+          targetZoom = THREE.MathUtils.clamp(
+            targetZoom * Math.exp(-event.deltaY * multiplier * 0.00145),
+            0.72,
+            2.45,
+          );
         };
         const onKeyDown = (event: KeyboardEvent) => {
-          if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-          event.preventDefault();
-          velocity += event.key === "ArrowLeft" ? 1.25 : -1.25;
-          velocity = THREE.MathUtils.clamp(velocity, -6.5, 6.5);
+          if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+            event.preventDefault();
+            velocity += event.key === "ArrowLeft" ? 1.25 : -1.25;
+            velocity = THREE.MathUtils.clamp(velocity, -6.5, 6.5);
+          } else if (["+", "=", "-", "_"].includes(event.key)) {
+            event.preventDefault();
+            targetZoom = THREE.MathUtils.clamp(
+              targetZoom * (event.key === "+" || event.key === "=" ? 1.14 : 1 / 1.14),
+              0.72,
+              2.45,
+            );
+          }
         };
 
         renderer.domElement.addEventListener("pointerdown", onPointerDown);
@@ -377,8 +396,11 @@ export function DrumField() {
           lastTime = now;
           currentTilt.x = THREE.MathUtils.lerp(currentTilt.x, targetTilt.x, 1 - Math.exp(-5.5 * delta));
           currentTilt.y = THREE.MathUtils.lerp(currentTilt.y, targetTilt.y, 1 - Math.exp(-5.5 * delta));
+          currentZoom = THREE.MathUtils.lerp(currentZoom, targetZoom, 1 - Math.exp(-10 * delta));
           instrument.rotation.x = currentTilt.x;
           instrument.rotation.y = currentTilt.y;
+          camera.zoom = currentZoom;
+          camera.updateProjectionMatrix();
 
           if (!pointer.down) {
             spin += velocity * delta;

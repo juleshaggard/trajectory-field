@@ -37,6 +37,9 @@ main,
 .compass-shell,
 .terrain-shell,
 .map-shell,
+.traffic-shell,
+.airspace-shell,
+.plotter-shell,
 .radar-shell,
 .drum-shell,
 .pulse-shell,
@@ -426,7 +429,7 @@ html.flight-cursor-enabled * {
   z-index: 100;
   width: 26px;
   height: 28px;
-  background: url("/aircraft-cursor.svg") center / contain no-repeat;
+  background: var(--flight-cursor-image, url("/aircraft-cursor.svg")) center / contain no-repeat;
   opacity: 0;
   pointer-events: none;
   transform-origin: 50% 50%;
@@ -435,7 +438,7 @@ html.flight-cursor-enabled * {
 }
 
 .flight-cursor.is-hovering {
-  background-image: url("/aircraft-cursor-hover.svg");
+  background-image: var(--flight-cursor-hover-image, url("/aircraft-cursor-hover.svg"));
 }
 
 .shader-panel {
@@ -714,6 +717,99 @@ html.flight-cursor-enabled * {
   display: block;
   width: 100% !important;
   height: auto !important;
+}
+
+.traffic-field {
+  position: relative;
+  width: 100%;
+  height: calc(100svh - 60px);
+  min-height: 680px;
+  overflow: hidden;
+  background: var(--paper);
+}
+
+.traffic-field canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.airspace-field {
+  position: relative;
+  width: 100%;
+  height: calc(100svh - 60px);
+  min-height: 680px;
+  overflow: hidden;
+  background: var(--paper);
+}
+
+.airspace-field canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline: none;
+  touch-action: none;
+}
+
+.plotter-shell {
+  background: var(--off-white);
+}
+
+.plotter-stage {
+  width: 100%;
+}
+
+.plotter-stage--hero {
+  height: calc(100svh - 60px);
+  min-height: 700px;
+}
+
+.plotter-board {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--paper);
+}
+
+.plotter-board canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.plotter-mosaic {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 28px;
+  padding: 48px 28px 72px;
+}
+
+.plotter-mosaic .plotter-board {
+  min-height: 420px;
+  border: 1px solid color-mix(in srgb, var(--navy) 26%, transparent);
+  border-radius: 18px;
+}
+
+.plotter-board--wide {
+  grid-column: span 8;
+  height: 560px;
+}
+
+.plotter-board--square {
+  grid-column: span 4;
+  height: 560px;
+}
+
+.plotter-board--medium {
+  grid-column: span 5;
+  height: 460px;
+}
+
+.plotter-board--landscape {
+  grid-column: span 7;
+  height: 460px;
 }
 
 .terrain-field {
@@ -1180,6 +1276,21 @@ html.flight-cursor-enabled * {
   .site-nav__brand {
     font-size: 9px;
   }
+
+  .plotter-mosaic {
+    gap: 18px;
+    padding: 32px 18px 48px;
+  }
+
+  .plotter-board--wide,
+  .plotter-board--medium {
+    grid-column: span 7;
+  }
+
+  .plotter-board--square,
+  .plotter-board--landscape {
+    grid-column: span 5;
+  }
 }
 
 .drum-loading {
@@ -1359,6 +1470,32 @@ html.flight-cursor-enabled * {
 
   .terrain-field {
     min-height: 520px;
+  }
+
+  .traffic-field {
+    min-height: 560px;
+  }
+
+  .airspace-field {
+    min-height: 560px;
+  }
+
+  .plotter-stage--hero {
+    min-height: 580px;
+  }
+
+  .plotter-mosaic {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 28px 12px 44px;
+  }
+
+  .plotter-board--wide,
+  .plotter-board--square,
+  .plotter-board--medium,
+  .plotter-board--landscape {
+    grid-column: 1;
+    height: min(122vw, 520px);
   }
 
   .terrain-crosshair {

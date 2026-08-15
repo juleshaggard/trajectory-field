@@ -22,7 +22,6 @@ export function CompassField() {
         const powder = "#bcd4e4";
         const gray = "#e4e4e4";
         const offWhite = "#f5f5f5";
-        const white = "#ffffff";
         const signal = "#e1fe0e";
         let reducedMotion = false;
 

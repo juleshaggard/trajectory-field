@@ -242,6 +242,21 @@ export function TrajectoryField({ collection }: { collection: Collection }) {
           }));
         };
 
+        const samplePoint = (points: Point[], progress: number) => {
+          const bounded = p.constrain(progress, 0, 1);
+          const exactIndex = bounded * (points.length - 1);
+          const lowerIndex = Math.floor(exactIndex);
+          const upperIndex = Math.min(points.length - 1, lowerIndex + 1);
+          const mix = exactIndex - lowerIndex;
+          const lower = points[lowerIndex];
+          const upper = points[upperIndex];
+
+          return {
+            x: p.lerp(lower.x, upper.x, mix),
+            y: p.lerp(lower.y, upper.y, mix),
+          };
+        };
+
         const linePath = (points: Point[], color: string, weight = 2, dotted = false, maxProgress = 1) => {
           p.push();
           p.noFill();
@@ -250,8 +265,13 @@ export function TrajectoryField({ collection }: { collection: Collection }) {
           const ctx = p.drawingContext as CanvasRenderingContext2D;
           if (dotted) ctx.setLineDash([4, 7]);
           p.beginShape();
-          const count = Math.max(2, Math.floor(points.length * maxProgress));
-          for (let i = 0; i < count; i += 1) p.vertex(points[i].x, points[i].y);
+          const exactEnd = p.constrain(maxProgress, 0, 1) * (points.length - 1);
+          const wholeEnd = Math.floor(exactEnd);
+          for (let i = 0; i <= wholeEnd; i += 1) p.vertex(points[i].x, points[i].y);
+          if (wholeEnd < points.length - 1) {
+            const endpoint = samplePoint(points, maxProgress);
+            p.vertex(endpoint.x, endpoint.y);
+          }
           p.endShape();
           ctx.setLineDash([]);
           p.pop();
@@ -259,8 +279,7 @@ export function TrajectoryField({ collection }: { collection: Collection }) {
 
         const movingNode = (points: Point[], progress: number, color: string, radius = 7) => {
           if (!settingsRef.current.particles) return;
-          const index = Math.min(points.length - 1, Math.floor(progress * (points.length - 1)));
-          const point = points[index];
+          const point = samplePoint(points, progress);
           p.push();
           p.noStroke();
           p.fill(p.color(color + "2f"));
@@ -346,13 +365,16 @@ export function TrajectoryField({ collection }: { collection: Collection }) {
                 p.circle(point.x, point.y, 3.2);
               }
 
-              const index = Math.floor(progress * (pts.length - 1));
-              const head = pts[index];
+              const exactIndex = progress * (pts.length - 1);
+              const head = samplePoint(pts, progress);
               p.push();
               p.stroke(navy);
               p.strokeWeight(2.5 * settingsRef.current.stroke);
               for (let j = 1; j < 8; j += 1) {
-                const previous = pts[Math.max(0, index - j)];
+                const previous = samplePoint(
+                  pts,
+                  Math.max(0, exactIndex - j) / (pts.length - 1),
+                );
                 p.strokeWeight((3 - j * 0.3) * settingsRef.current.stroke);
                 p.line(previous.x, previous.y, head.x, head.y);
               }

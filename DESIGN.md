@@ -103,6 +103,7 @@ Signal yellow is the only accent. Do not expand it into large backgrounds, gradi
 - POI beacons use thin vertical stems and small geometric markers in white, powder, navy, or signal yellow.
 - Compass ticks remain fixed around the terrain while the map may drift a few degrees beneath them.
 - Pointer response is subtle and inertial. It reveals depth without turning the instrument into an orbit control.
+- Wheel and trackpad scrolling zoom the route map camera smoothly from 0.78× to 2.8×. Zoom must preserve the fixed compass relationship and must not scale or distort terrain geometry.
 
 ## Mechanical radar instruments
 
@@ -113,12 +114,35 @@ Signal yellow is the only accent. Do not expand it into large backgrounds, gradi
 - Signal yellow is limited to the current sweep, active rotor tip, and momentarily acquired tracks.
 - Lines use square caps and hard joints to preserve a machined rather than illustrative character.
 
+## Air traffic control fields
+
+- Traffic is a full-width, high-density airspace rather than a card or conventional map. Sector polygons, coastline abstractions, range rings, route corridors, named fixes, and live tracks form one continuous instrument.
+- Chaos comes from genuine information overlap: crossing flight plans, asynchronous handoffs, leader lines, compact altitude/speed tags, and many small navigation fixes. Preserve hierarchy so the underlying sectors remain quiet and aircraft remain readable.
+- Aircraft move continuously along cubic flight paths at display-synchronized 60 fps. Never quantize positions to route samples or discrete map cells.
+- Most tracks use navy or ink. Powder and gray describe controlled volumes and published corridors. Signal yellow identifies exactly one current acquisition or terminal origin.
+- Pointer proximity temporarily acquires the nearest aircraft without stopping or redirecting its flight path. Reduced-motion mode freezes the complete airspace at a representative operational state.
+
+## Terminal airspace charts
+
+- Airspace uses the system's white instrument surface. Ink and navy carry aircraft, fixes, runways, and primary compass geometry while powder and gray define quiet sectors and flight corridors.
+- The visualization occupies the entire field beneath navigation. Search, settings, information cards, map buttons, legends, and callouts do not sit over the chart.
+- Direct manipulation replaces map chrome. Wheel or trackpad movement zooms around the pointer, dragging pans the chart, and plus/minus keys provide an accessible zoom equivalent.
+- Aircraft remain live at display-synchronized frame rates. One signal-yellow acquisition may identify the active track; every other route and navaid stays within the neutral brand palette.
+
+## Plotting-board modules
+
+- Plotter modules translate the physical navigation plotting board into code: four-sided heading rulers, dense perimeter ticks, an orthogonal lattice, central registration axes, range rings, and calibrated bearing marks.
+- The master board occupies one complete viewport beneath navigation. Supporting range, bearing, intercept, and sector modules use an asymmetric multi-column field with generous separation and no explanatory card copy.
+- White and off-white carry the modules. Ink defines primary calibration; navy sets structural lines; powder and gray provide secondary measurement; one signal-yellow index identifies the live bearing.
+- Perimeter scales remain fixed while a bearing line and index advance smoothly. Reduced-motion mode freezes every module at a representative calibrated state.
+
 ## Radial drum instruments
 
 - Build the drum as a shallow physical cylinder with its measurement face angled toward the camera. The edge thickness must stay visible so the dial reads as an object, not a flat chart.
 - Use concentric navy and ink bands, 2° minor ticks, 10° medium ticks, and 30° major ticks. Numeric scales follow the circumference in tabular monospace.
 - Give the outer scale and inner index band slightly different rotational rates. Independent mechanical motion is preferred over decorative parallax.
-- Pointer position may shift pitch and yaw within a restrained range. Dragging and wheel input add rotational momentum that decays naturally; keyboard arrows provide an equivalent nudge.
+- Pointer position may shift pitch and yaw within a restrained range. Dragging adds rotational momentum that decays naturally; keyboard arrows provide an equivalent nudge.
+- Wheel and trackpad scrolling zoom the drum camera smoothly from 0.72× to 2.45×. Plus and minus keys provide an accessible equivalent without changing the instrument rotation.
 - White and off-white carry almost the entire field. Powder may describe depth and signal yellow marks one active index only.
 
 ## Global signal-processing layer
@@ -149,7 +173,7 @@ Signal yellow is the only accent. Do not expand it into large backgrounds, gradi
 
 ## Navigation and controls
 
-- Sticky 60 px navigation ordered as Live, Compass, Terrain, Map, Radar, Drum, Pulse, Atlas, Blank, and Archive. Archive always remains the final destination.
+- Sticky 60 px navigation ordered as Trajectory, Compass, Terrain, Map, Traffic, Airspace, Plotter, Radar, Drum, Pulse, Atlas, Blank, and Archive. Archive always remains the final destination.
 - Blank is a true empty white canvas that retains only the shared navigation, cursor, and FX system.
 - Active destination uses a thin navy underline.
 - Graph controls live in one compact floating panel and persist between graph pages.

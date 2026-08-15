@@ -1,14 +1,21 @@
 "use client";
 
-/* eslint-disable @next/next/no-html-link-for-pages */
-
 import { useEffect, useState } from "react";
+
+const SITE_BASE = import.meta.env.BASE_URL || "/";
+
+function routeHref(path = "") {
+  return path ? `${SITE_BASE}${path.replace(/^\/+/, "")}` : SITE_BASE;
+}
 
 type ActivePage =
   | "live"
   | "compass"
   | "terrain"
   | "map"
+  | "traffic"
+  | "airspace"
+  | "plotter"
   | "radar"
   | "drum"
   | "pulse"
@@ -68,39 +75,48 @@ export function SiteNavigation({
   return (
     <header className="site-nav">
       <div className="site-nav__inner">
-        <a className="site-nav__brand" href="/" aria-label="Trajectory Field home">
+        <a className="site-nav__brand" href={routeHref()} aria-label="Trajectory Field home">
           <span className="site-nav__mark" aria-hidden="true" />
           <span>Trajectory Field</span>
         </a>
         <nav className="site-nav__pages" aria-label="Instrument pages">
-          <a className={active === "live" ? "is-active" : ""} href="/">
-            Live
+          <a className={active === "live" ? "is-active" : ""} href={routeHref()}>
+            Trajectory
           </a>
-          <a className={active === "compass" ? "is-active" : ""} href="/compass">
+          <a className={active === "compass" ? "is-active" : ""} href={routeHref("compass")}>
             Compass
           </a>
-          <a className={active === "terrain" ? "is-active" : ""} href="/terrain">
+          <a className={active === "terrain" ? "is-active" : ""} href={routeHref("terrain")}>
             Terrain
           </a>
-          <a className={active === "map" ? "is-active" : ""} href="/map">
+          <a className={active === "map" ? "is-active" : ""} href={routeHref("map")}>
             Map
           </a>
-          <a className={active === "radar" ? "is-active" : ""} href="/radar">
+          <a className={active === "traffic" ? "is-active" : ""} href={routeHref("traffic")}>
+            Traffic
+          </a>
+          <a className={active === "airspace" ? "is-active" : ""} href={routeHref("airspace")}>
+            Airspace
+          </a>
+          <a className={active === "plotter" ? "is-active" : ""} href={routeHref("plotter")}>
+            Plotter
+          </a>
+          <a className={active === "radar" ? "is-active" : ""} href={routeHref("radar")}>
             Radar
           </a>
-          <a className={active === "drum" ? "is-active" : ""} href="/drum">
+          <a className={active === "drum" ? "is-active" : ""} href={routeHref("drum")}>
             Drum
           </a>
-          <a className={active === "pulse" ? "is-active" : ""} href="/pulse">
+          <a className={active === "pulse" ? "is-active" : ""} href={routeHref("pulse")}>
             Pulse
           </a>
-          <a className={active === "atlas" ? "is-active" : ""} href="/atlas">
+          <a className={active === "atlas" ? "is-active" : ""} href={routeHref("atlas")}>
             Atlas
           </a>
-          <a className={active === "blank" ? "is-active" : ""} href="/blank">
+          <a className={active === "blank" ? "is-active" : ""} href={routeHref("blank")}>
             Blank
           </a>
-          <a className={active === "archive" ? "is-active" : ""} href="/archive">
+          <a className={active === "archive" ? "is-active" : ""} href={routeHref("archive")}>
             Archive
           </a>
         </nav>

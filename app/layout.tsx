@@ -1,5 +1,18 @@
 import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import { MouseTrail } from "./mouse-trail";
+import { ShaderEffects } from "./shader-effects";
 import "./globals.css";
+
+const geist = Geist({
+  variable: "--font-geist",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: "Trajectory Field",
@@ -16,7 +29,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className={`${geist.variable} ${geistMono.variable}`}>
+        {children}
+        <ShaderEffects />
+        <MouseTrail />
+      </body>
     </html>
   );
 }

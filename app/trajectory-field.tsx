@@ -1,16 +1,63 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type P5 from "p5";
+import { SiteNavigation } from "./site-navigation";
 
-type PanelTone = "black" | "powder" | "gray" | "offwhite" | "white" | "split";
+type Collection = "featured" | "archive";
+type PanelTone = "gray" | "white";
 type Rect = { x: number; y: number; w: number; h: number; tone?: PanelTone };
 type Point = { x: number; y: number; vx?: number; vy?: number };
+type Settings = {
+  grid: boolean;
+  axisLines: boolean;
+  axisArrows: boolean;
+  particles: boolean;
+  motion: boolean;
+  speed: number;
+  stroke: number;
+  gridDensity: number;
+  background: "alternating" | "white" | "gray";
+};
 
 const TAU = Math.PI * 2;
+const DEFAULT_SETTINGS: Settings = {
+  grid: true,
+  axisLines: true,
+  axisArrows: true,
+  particles: true,
+  motion: true,
+  speed: 1,
+  stroke: 1,
+  gridDensity: 6,
+  background: "alternating",
+};
 
-export function TrajectoryField() {
+export function TrajectoryField({ collection }: { collection: Collection }) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const settingsRef = useRef<Settings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const [controlsOpen, setControlsOpen] = useState(false);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("trajectory-field-controls");
+    if (!saved) return;
+    try {
+      const restored = { ...DEFAULT_SETTINGS, ...(JSON.parse(saved) as Partial<Settings>) };
+      queueMicrotask(() => setSettings(restored));
+    } catch {
+      window.localStorage.removeItem("trajectory-field-controls");
+    }
+  }, []);
+
+  useEffect(() => {
+    settingsRef.current = settings;
+    window.localStorage.setItem("trajectory-field-controls", JSON.stringify(settings));
+  }, [settings]);
+
+  const setSetting = <Key extends keyof Settings>(key: Key, value: Settings[Key]) => {
+    setSettings((current) => ({ ...current, [key]: value }));
+  };
 
   useEffect(() => {
     let instance: P5 | undefined;
@@ -29,78 +76,40 @@ export function TrajectoryField() {
         const signal = "#e1fe0e";
         const colors = [navy, black, navy, black, navy, signal];
 
-        const paletteBands = [
-          { color: black, weight: 9.03 },
-          { color: navy, weight: 4.85 },
-          { color: powder, weight: 19.53 },
-          { color: gray, weight: 9.71 },
-          { color: offWhite, weight: 9.71 },
-          { color: white, weight: 41.65 },
-          { color: signal, weight: 4.74 },
-        ];
-
         let phase = 0;
         let impact = { x: -100, y: -100, born: -10 };
         let reducedMotion = false;
 
         const targetHeight = () => {
           const width = window.innerWidth;
-          if (width < 680) {
-            const gap = 10;
-            const panelHeight = Math.max(250, width * 0.74);
-            return Math.round(gap * 7 + panelHeight * 6);
-          }
-          return Math.max(window.innerHeight, 680);
+          const mobile = width < 760;
+          const edge = mobile ? 16 : 28;
+          const gap = mobile ? 28 : 48;
+          const panelWidth = width - edge * 2;
+          const panelHeight = Math.max(
+            mobile ? 390 : 500,
+            Math.min(mobile ? 620 : 760, panelWidth * (mobile ? 1.05 : 0.54)),
+          );
+          return Math.ceil(edge * 2 + panelHeight * 3 + gap * 2);
         };
 
         const panels = (): Rect[] => {
-          const gap = p.width < 680 ? 10 : 12;
-          const edge = gap;
+          const mobile = p.width < 760;
+          const edge = mobile ? 16 : 28;
+          const gap = mobile ? 28 : 48;
+          const w = p.width - edge * 2;
+          const h = (p.height - edge * 2 - gap * 2) / 3;
+          const requestedBackground = settingsRef.current.background;
 
-          if (p.width < 680) {
-            const h = (p.height - gap * 7) / 6;
-            return Array.from({ length: 6 }, (_, i) => ({
-              x: edge,
-              y: edge + i * (h + gap),
-              w: p.width - edge * 2,
-              h,
-              tone: (["white", "powder", "gray", "offwhite", "black", "split"] as PanelTone[])[i],
-            }));
-          }
-
-          const usableW = p.width - edge * 2;
-          const usableH = p.height - edge * 2;
-          const topH = usableH * 0.55 - gap * 0.5;
-          const bottomH = usableH - topH - gap;
-          const halfW = usableW * 0.5 - gap * 0.5;
-          const quarterW = (usableW - gap * 3) * 0.25;
-
-          return [
-            { x: edge, y: edge, w: halfW, h: topH, tone: "white" },
-            { x: edge + halfW + gap, y: edge, w: quarterW, h: topH, tone: "powder" },
-            {
-              x: edge + halfW + gap + quarterW + gap,
-              y: edge,
-              w: quarterW,
-              h: topH,
-              tone: "gray",
-            },
-            { x: edge, y: edge + topH + gap, w: quarterW, h: bottomH, tone: "offwhite" },
-            {
-              x: edge + quarterW + gap,
-              y: edge + topH + gap,
-              w: quarterW,
-              h: bottomH,
-              tone: "black",
-            },
-            {
-              x: edge + (quarterW + gap) * 2,
-              y: edge + topH + gap,
-              w: halfW,
-              h: bottomH,
-              tone: "split",
-            },
-          ];
+          return Array.from({ length: 3 }, (_, i) => ({
+            x: edge,
+            y: edge + i * (h + gap),
+            w,
+            h,
+            tone: requestedBackground === "alternating"
+              ? (i % 2 === 0 ? "white" : "gray")
+              : requestedBackground,
+          }));
         };
 
         const roundedClip = (rect: Rect, callback: () => void) => {
@@ -114,71 +123,55 @@ export function TrajectoryField() {
         };
 
         const panelBase = (rect: Rect) => {
-          const toneColors: Record<Exclude<PanelTone, "split">, string> = {
-            black,
-            powder,
+          const toneColors: Record<PanelTone, string> = {
             gray,
-            offwhite: offWhite,
             white,
           };
-          p.noStroke();
-          p.fill(rect.tone === "split" ? white : toneColors[rect.tone ?? "white"]);
+          p.stroke(navy + "1f");
+          p.strokeWeight(1);
+          p.fill(toneColors[rect.tone ?? "white"]);
           p.rect(rect.x, rect.y, rect.w, rect.h, Math.min(18, rect.w * 0.05));
-
-          if (rect.tone === "split") {
-            roundedClip(rect, () => {
-              p.noStroke();
-              p.fill(powder);
-              p.rect(rect.x + rect.w * 0.6, rect.y, rect.w * 0.4, rect.h);
-            });
-          }
-
-          roundedClip(rect, () => {
-            const total = paletteBands.reduce((sum, band) => sum + band.weight, 0);
-            let cursor = rect.x;
-            paletteBands.forEach((band, index) => {
-              const bandWidth = index === paletteBands.length - 1
-                ? rect.x + rect.w - cursor
-                : rect.w * (band.weight / total);
-              p.noStroke();
-              p.fill(band.color);
-              p.rect(cursor, rect.y + rect.h - 3, bandWidth, 3);
-              cursor += bandWidth;
-            });
-          });
+          p.noStroke();
         };
 
-        const chart = (rect: Rect, xInset = 0.085, topInset = 0.09) => ({
+        const chart = (rect: Rect, xInset = 0.085, topInset = 0.12) => ({
           x: rect.x + rect.w * xInset,
           y: rect.y + rect.h * topInset,
           w: rect.w * (1 - xInset - 0.055),
-          h: rect.h * (1 - topInset - 0.105),
+          h: rect.h * (1 - topInset - 0.14),
         });
 
-        const graphFrame = (rect: Rect, divisions = 6) => {
+        const graphFrame = (rect: Rect) => {
           const c = chart(rect);
-          const dark = rect.tone === "black";
+          const current = settingsRef.current;
           p.push();
-          p.stroke(dark ? navy : rect.tone === "powder" ? white : gray);
-          p.strokeWeight(1);
-          for (let i = 1; i <= divisions; i += 1) {
-            const x = c.x + (c.w * i) / divisions;
-            p.line(x, c.y, x, c.y + c.h);
-          }
-          for (let i = 1; i <= 4; i += 1) {
-            const y = c.y + (c.h * i) / 4;
-            p.line(c.x, y, c.x + c.w, y);
+          if (current.grid) {
+            const gridCount = Math.max(2, Math.round(current.gridDensity));
+            p.stroke(rect.tone === "gray" ? white : gray);
+            p.strokeWeight(1);
+            for (let i = 1; i <= gridCount; i += 1) {
+              const x = c.x + (c.w * i) / gridCount;
+              p.line(x, c.y, x, c.y + c.h);
+            }
+            for (let i = 1; i <= Math.max(3, Math.round(gridCount * 0.6)); i += 1) {
+              const y = c.y + (c.h * i) / Math.max(3, Math.round(gridCount * 0.6));
+              p.line(c.x, y, c.x + c.w, y);
+            }
           }
 
-          p.stroke(dark ? powder : navy);
-          p.strokeWeight(1.25);
-          p.line(c.x, c.y, c.x, c.y + c.h);
-          p.line(c.x, c.y + c.h, c.x + c.w, c.y + c.h);
+          if (current.axisLines) {
+            p.stroke(navy);
+            p.strokeWeight(1.25);
+            p.line(c.x, c.y, c.x, c.y + c.h);
+            p.line(c.x, c.y + c.h, c.x + c.w, c.y + c.h);
+          }
 
-          p.noStroke();
-          p.fill(dark ? powder : navy);
-          p.triangle(c.x + c.w, c.y + c.h, c.x + c.w - 7, c.y + c.h - 3.5, c.x + c.w - 7, c.y + c.h + 3.5);
-          p.triangle(c.x, c.y, c.x - 3.5, c.y + 7, c.x + 3.5, c.y + 7);
+          if (current.axisArrows) {
+            p.noStroke();
+            p.fill(navy);
+            p.triangle(c.x + c.w, c.y + c.h, c.x + c.w - 7, c.y + c.h - 3.5, c.x + c.w - 7, c.y + c.h + 3.5);
+            p.triangle(c.x, c.y, c.x - 3.5, c.y + 7, c.x + 3.5, c.y + 7);
+          }
           p.pop();
           return c;
         };
@@ -253,7 +246,7 @@ export function TrajectoryField() {
           p.push();
           p.noFill();
           p.stroke(color);
-          p.strokeWeight(weight);
+          p.strokeWeight(weight * settingsRef.current.stroke);
           const ctx = p.drawingContext as CanvasRenderingContext2D;
           if (dotted) ctx.setLineDash([4, 7]);
           p.beginShape();
@@ -265,6 +258,7 @@ export function TrajectoryField() {
         };
 
         const movingNode = (points: Point[], progress: number, color: string, radius = 7) => {
+          if (!settingsRef.current.particles) return;
           const index = Math.min(points.length - 1, Math.floor(progress * (points.length - 1)));
           const point = points[index];
           p.push();
@@ -279,7 +273,7 @@ export function TrajectoryField() {
         const drawFan = (rect: Rect, t: number) => {
           panelBase(rect);
           roundedClip(rect, () => {
-            const c = graphFrame(rect, 8);
+            const c = graphFrame(rect);
             const pointer = p.constrain((p.mouseX - rect.x) / rect.w, 0, 1);
             const angles = [12, 23, 34, 45, 56, 67, 78];
             const paths = angles.map((angle) => projectile(angle + (pointer - 0.5) * 4, 18, 9.8));
@@ -296,7 +290,7 @@ export function TrajectoryField() {
         const drawDrag = (rect: Rect, t: number) => {
           panelBase(rect);
           roundedClip(rect, () => {
-            const c = graphFrame(rect, 5);
+            const c = graphFrame(rect);
             const paths = [draggedProjectile(0), draggedProjectile(0.045), draggedProjectile(0.012, true)];
             const maxX = Math.max(...paths[0].map((point) => point.x));
             const maxY = Math.max(...paths[0].map((point) => point.y));
@@ -312,7 +306,7 @@ export function TrajectoryField() {
         const drawEqualRange = (rect: Rect, t: number) => {
           panelBase(rect);
           roundedClip(rect, () => {
-            const c = graphFrame(rect, 5);
+            const c = graphFrame(rect);
             const paths = [projectile(28), projectile(62)];
             const maxX = Math.max(...paths.flat().map((point) => point.x));
             const maxY = Math.max(...paths.flat().map((point) => point.y));
@@ -335,33 +329,35 @@ export function TrajectoryField() {
         const drawTimeBeads = (rect: Rect, t: number) => {
           panelBase(rect);
           roundedClip(rect, () => {
-            const c = graphFrame(rect, 5);
+            const c = graphFrame(rect);
             const pts = mapped(projectile(52, 18), c);
             linePath(pts, navy, 1, true);
 
-            for (let i = 0; i < 12; i += 1) {
-              const progress = i / 11;
-              const point = pts[Math.floor(progress * (pts.length - 1))];
-              const pulse = 0.5 + 0.5 * Math.sin(t * 4.2 - progress * TAU * 1.6);
-              p.noStroke();
-              p.fill(p.color(powder + Math.round(30 + pulse * 80).toString(16).padStart(2, "0")));
-              p.circle(point.x, point.y, 4 + pulse * 7);
-              p.fill(navy);
-              p.circle(point.x, point.y, 3.2);
-            }
-
             const progress = (t * 0.17) % 1;
-            const index = Math.floor(progress * (pts.length - 1));
-            const head = pts[index];
-            p.push();
-            p.stroke(navy);
-            p.strokeWeight(2.5);
-            for (let j = 1; j < 8; j += 1) {
-              const previous = pts[Math.max(0, index - j)];
-              p.strokeWeight(3 - j * 0.3);
-              p.line(previous.x, previous.y, head.x, head.y);
+            if (settingsRef.current.particles) {
+              for (let i = 0; i < 12; i += 1) {
+                const beadProgress = i / 11;
+                const point = pts[Math.floor(beadProgress * (pts.length - 1))];
+                const pulse = 0.5 + 0.5 * Math.sin(t * 4.2 - beadProgress * TAU * 1.6);
+                p.noStroke();
+                p.fill(p.color(powder + Math.round(30 + pulse * 80).toString(16).padStart(2, "0")));
+                p.circle(point.x, point.y, 4 + pulse * 7);
+                p.fill(navy);
+                p.circle(point.x, point.y, 3.2);
+              }
+
+              const index = Math.floor(progress * (pts.length - 1));
+              const head = pts[index];
+              p.push();
+              p.stroke(navy);
+              p.strokeWeight(2.5 * settingsRef.current.stroke);
+              for (let j = 1; j < 8; j += 1) {
+                const previous = pts[Math.max(0, index - j)];
+                p.strokeWeight((3 - j * 0.3) * settingsRef.current.stroke);
+                p.line(previous.x, previous.y, head.x, head.y);
+              }
+              p.pop();
             }
-            p.pop();
             movingNode(pts, progress, signal, 8);
           });
         };
@@ -369,10 +365,10 @@ export function TrajectoryField() {
         const drawVectors = (rect: Rect, t: number) => {
           panelBase(rect);
           roundedClip(rect, () => {
-            const c = graphFrame(rect, 5);
+            const c = graphFrame(rect);
             const source = projectile(49, 18);
             const pts = mapped(source, c);
-            linePath(pts, powder, 1.25, true);
+            linePath(pts, navy, 1.25, true);
             const wobble = 0.86 + 0.14 * Math.sin(t * 1.8);
 
             for (let i = 0; i < 7; i += 1) {
@@ -383,10 +379,10 @@ export function TrajectoryField() {
               const vx = Math.min(rect.w * 0.095, Math.abs(velocity.vx ?? 0) * 1.15) * wobble;
               const vy = -(velocity.vy ?? 0) * 1.1 * wobble;
               p.noStroke();
-              p.fill(white);
+              p.fill(black);
               p.circle(point.x, point.y, 4);
-              arrow(point.x, point.y, point.x + vx, point.y, powder, 1.1);
-              arrow(point.x + vx, point.y, point.x + vx, point.y + vy, white, 1.1);
+              arrow(point.x, point.y, point.x + vx, point.y, navy, 1.1);
+              arrow(point.x + vx, point.y, point.x + vx, point.y + vy, black, 1.1);
               arrow(point.x, point.y, point.x + vx, point.y + vy, signal, 1.8);
             }
           });
@@ -395,7 +391,7 @@ export function TrajectoryField() {
         const drawGravity = (rect: Rect, t: number) => {
           panelBase(rect);
           roundedClip(rect, () => {
-            const c = graphFrame(rect, 9);
+            const c = graphFrame(rect);
             const gravities = [5.1, 6.7, 8.2, 9.8, 12.2, 15.5];
             const paths = gravities.map((gravity) => projectile(42, 18, gravity));
             const maxX = Math.max(...paths.flat().map((point) => point.x));
@@ -436,15 +432,21 @@ export function TrajectoryField() {
         };
 
         p.draw = () => {
-          const t = reducedMotion ? 1.4 : p.millis() / 1000;
-          p.background(black);
-          const [a, b, c, d, e, f] = panels();
-          drawFan(a, t);
-          drawDrag(b, t);
-          drawEqualRange(c, t);
-          drawTimeBeads(d, t);
-          drawVectors(e, t);
-          drawGravity(f, t);
+          const current = settingsRef.current;
+          const t = reducedMotion || !current.motion
+            ? 1.4
+            : (p.millis() / 1000) * current.speed;
+          p.background(offWhite);
+          const [a, b, c] = panels();
+          if (collection === "featured") {
+            drawFan(a, t);
+            drawDrag(b, t);
+            drawGravity(c, t);
+          } else {
+            drawEqualRange(a, t);
+            drawTimeBeads(b, t);
+            drawVectors(c, t);
+          }
 
           const age = t - impact.born;
           if (age >= 0 && age < 0.8) {
@@ -479,7 +481,160 @@ export function TrajectoryField() {
       active = false;
       instance?.remove();
     };
-  }, []);
+  }, [collection]);
 
-  return <div ref={hostRef} className="trajectory-field" />;
+  return (
+    <div className="trajectory-shell">
+      <SiteNavigation
+        active={collection === "featured" ? "live" : "archive"}
+        controlsOpen={controlsOpen}
+        onControls={() => setControlsOpen((open) => !open)}
+      />
+
+      <aside
+        id="graph-controls"
+        className={`control-panel${controlsOpen ? " is-open" : ""}`}
+        aria-hidden={!controlsOpen}
+        hidden={!controlsOpen}
+      >
+        <div className="control-panel__head">
+          <span>Graph controls</span>
+          <button type="button" onClick={() => setSettings(DEFAULT_SETTINGS)}>
+            Reset
+          </button>
+        </div>
+
+        <div className="control-section">
+          <ToggleRow
+            label="Background grid"
+            checked={settings.grid}
+            onChange={(checked) => setSetting("grid", checked)}
+          />
+          <ToggleRow
+            label="Axis lines"
+            checked={settings.axisLines}
+            onChange={(checked) => setSetting("axisLines", checked)}
+          />
+          <ToggleRow
+            label="Axis arrows"
+            checked={settings.axisArrows}
+            onChange={(checked) => setSetting("axisArrows", checked)}
+          />
+          <ToggleRow
+            label="Moving points"
+            checked={settings.particles}
+            onChange={(checked) => setSetting("particles", checked)}
+          />
+          <ToggleRow
+            label="Motion"
+            checked={settings.motion}
+            onChange={(checked) => setSetting("motion", checked)}
+          />
+        </div>
+
+        <div className="control-section control-section--ranges">
+          <RangeRow
+            label="Speed"
+            value={settings.speed}
+            min={0.25}
+            max={2.5}
+            step={0.05}
+            display={`${settings.speed.toFixed(2)}×`}
+            onChange={(value) => setSetting("speed", value)}
+          />
+          <RangeRow
+            label="Stroke"
+            value={settings.stroke}
+            min={0.5}
+            max={2.5}
+            step={0.05}
+            display={`${settings.stroke.toFixed(2)}×`}
+            onChange={(value) => setSetting("stroke", value)}
+          />
+          <RangeRow
+            label="Grid density"
+            value={settings.gridDensity}
+            min={3}
+            max={12}
+            step={1}
+            display={String(settings.gridDensity)}
+            disabled={!settings.grid}
+            onChange={(value) => setSetting("gridDensity", value)}
+          />
+        </div>
+
+        <fieldset className="background-control">
+          <legend>Background</legend>
+          <div>
+            {(["alternating", "white", "gray"] as const).map((value) => (
+              <button
+                type="button"
+                key={value}
+                className={settings.background === value ? "is-selected" : ""}
+                onClick={() => setSetting("background", value)}
+              >
+                {value === "alternating" ? "Mix" : value === "white" ? "White" : "Gray"}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      </aside>
+
+      <div ref={hostRef} className="trajectory-field" />
+    </div>
+  );
+}
+
+function ToggleRow({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="toggle-row">
+      <span>{label}</span>
+      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
+      <span className="toggle-track" aria-hidden="true"><span /></span>
+    </label>
+  );
+}
+
+function RangeRow({
+  label,
+  value,
+  min,
+  max,
+  step,
+  display,
+  disabled = false,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  display: string;
+  disabled?: boolean;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <label className={`range-row${disabled ? " is-disabled" : ""}`}>
+      <span><span>{label}</span><output>{display}</output></span>
+      <input
+        aria-label={label}
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        disabled={disabled}
+        onChange={(event) => onChange(Number(event.target.value))}
+      />
+    </label>
+  );
 }

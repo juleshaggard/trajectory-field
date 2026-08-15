@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <main>
-      <TrajectoryField />
+      <TrajectoryField collection="featured" />
     </main>
   );
 }

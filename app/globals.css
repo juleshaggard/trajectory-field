@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #111216;
+  --paper: #f2f0e9;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--ink);
+  overscroll-behavior: none;
+}
+
+body {
+  min-width: 320px;
+  overflow-x: hidden;
+}
+
+main,
+.trajectory-field {
+  min-height: 100svh;
+}
+
+.trajectory-field {
+  position: relative;
+  width: 100%;
+  background: var(--ink);
+  cursor: crosshair;
+  touch-action: pan-y;
+}
+
+.trajectory-field canvas {
+  display: block;
+  width: 100% !important;
+  height: auto !important;
+}

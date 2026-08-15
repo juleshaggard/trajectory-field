@@ -3,7 +3,8 @@
 import { useEffect, useRef } from "react";
 import type P5 from "p5";
 
-type Rect = { x: number; y: number; w: number; h: number; dark?: boolean };
+type PanelTone = "black" | "powder" | "gray" | "offwhite" | "white" | "split";
+type Rect = { x: number; y: number; w: number; h: number; tone?: PanelTone };
 type Point = { x: number; y: number; vx?: number; vy?: number };
 
 const TAU = Math.PI * 2;
@@ -19,16 +20,24 @@ export function TrajectoryField() {
       if (!active || !hostRef.current) return;
 
       instance = new P5Constructor((p: P5) => {
-        const paper = "#f0eee7";
-        const ink = "#121318";
-        const faintInk = "#c9c5ba";
-        const cyan = "#5dd6ff";
-        const violet = "#7658ff";
-        const acid = "#b7f34b";
-        const coral = "#ff5a68";
-        const gold = "#ffbd4a";
-        const green = "#43c97a";
-        const colors = [cyan, violet, coral, gold, green, acid];
+        const black = "#000000";
+        const navy = "#305579";
+        const powder = "#bcd4e4";
+        const gray = "#e4e4e4";
+        const offWhite = "#f5f5f5";
+        const white = "#ffffff";
+        const signal = "#e1fe0e";
+        const colors = [navy, black, navy, black, navy, signal];
+
+        const paletteBands = [
+          { color: black, weight: 9.03 },
+          { color: navy, weight: 4.85 },
+          { color: powder, weight: 19.53 },
+          { color: gray, weight: 9.71 },
+          { color: offWhite, weight: 9.71 },
+          { color: white, weight: 41.65 },
+          { color: signal, weight: 4.74 },
+        ];
 
         let phase = 0;
         let impact = { x: -100, y: -100, born: -10 };
@@ -55,7 +64,7 @@ export function TrajectoryField() {
               y: edge + i * (h + gap),
               w: p.width - edge * 2,
               h,
-              dark: i === 0 || i === 3 || i === 5,
+              tone: (["white", "powder", "gray", "offwhite", "black", "split"] as PanelTone[])[i],
             }));
           }
 
@@ -67,28 +76,29 @@ export function TrajectoryField() {
           const quarterW = (usableW - gap * 3) * 0.25;
 
           return [
-            { x: edge, y: edge, w: halfW, h: topH, dark: true },
-            { x: edge + halfW + gap, y: edge, w: quarterW, h: topH },
+            { x: edge, y: edge, w: halfW, h: topH, tone: "white" },
+            { x: edge + halfW + gap, y: edge, w: quarterW, h: topH, tone: "powder" },
             {
               x: edge + halfW + gap + quarterW + gap,
               y: edge,
               w: quarterW,
               h: topH,
+              tone: "gray",
             },
-            { x: edge, y: edge + topH + gap, w: quarterW, h: bottomH },
+            { x: edge, y: edge + topH + gap, w: quarterW, h: bottomH, tone: "offwhite" },
             {
               x: edge + quarterW + gap,
               y: edge + topH + gap,
               w: quarterW,
               h: bottomH,
-              dark: true,
+              tone: "black",
             },
             {
               x: edge + (quarterW + gap) * 2,
               y: edge + topH + gap,
               w: halfW,
               h: bottomH,
-              dark: true,
+              tone: "split",
             },
           ];
         };
@@ -104,9 +114,38 @@ export function TrajectoryField() {
         };
 
         const panelBase = (rect: Rect) => {
+          const toneColors: Record<Exclude<PanelTone, "split">, string> = {
+            black,
+            powder,
+            gray,
+            offwhite: offWhite,
+            white,
+          };
           p.noStroke();
-          p.fill(rect.dark ? ink : paper);
+          p.fill(rect.tone === "split" ? white : toneColors[rect.tone ?? "white"]);
           p.rect(rect.x, rect.y, rect.w, rect.h, Math.min(18, rect.w * 0.05));
+
+          if (rect.tone === "split") {
+            roundedClip(rect, () => {
+              p.noStroke();
+              p.fill(powder);
+              p.rect(rect.x + rect.w * 0.6, rect.y, rect.w * 0.4, rect.h);
+            });
+          }
+
+          roundedClip(rect, () => {
+            const total = paletteBands.reduce((sum, band) => sum + band.weight, 0);
+            let cursor = rect.x;
+            paletteBands.forEach((band, index) => {
+              const bandWidth = index === paletteBands.length - 1
+                ? rect.x + rect.w - cursor
+                : rect.w * (band.weight / total);
+              p.noStroke();
+              p.fill(band.color);
+              p.rect(cursor, rect.y + rect.h - 3, bandWidth, 3);
+              cursor += bandWidth;
+            });
+          });
         };
 
         const chart = (rect: Rect, xInset = 0.085, topInset = 0.09) => ({
@@ -118,9 +157,9 @@ export function TrajectoryField() {
 
         const graphFrame = (rect: Rect, divisions = 6) => {
           const c = chart(rect);
-          const light = rect.dark;
+          const dark = rect.tone === "black";
           p.push();
-          p.stroke(light ? "#2b2e36" : faintInk);
+          p.stroke(dark ? navy : rect.tone === "powder" ? white : gray);
           p.strokeWeight(1);
           for (let i = 1; i <= divisions; i += 1) {
             const x = c.x + (c.w * i) / divisions;
@@ -131,13 +170,13 @@ export function TrajectoryField() {
             p.line(c.x, y, c.x + c.w, y);
           }
 
-          p.stroke(light ? "#8b909c" : "#57575a");
+          p.stroke(dark ? powder : navy);
           p.strokeWeight(1.25);
           p.line(c.x, c.y, c.x, c.y + c.h);
           p.line(c.x, c.y + c.h, c.x + c.w, c.y + c.h);
 
           p.noStroke();
-          p.fill(light ? "#8b909c" : "#57575a");
+          p.fill(dark ? powder : navy);
           p.triangle(c.x + c.w, c.y + c.h, c.x + c.w - 7, c.y + c.h - 3.5, c.x + c.w - 7, c.y + c.h + 3.5);
           p.triangle(c.x, c.y, c.x - 3.5, c.y + 7, c.x + 3.5, c.y + 7);
           p.pop();
@@ -261,7 +300,7 @@ export function TrajectoryField() {
             const paths = [draggedProjectile(0), draggedProjectile(0.045), draggedProjectile(0.012, true)];
             const maxX = Math.max(...paths[0].map((point) => point.x));
             const maxY = Math.max(...paths[0].map((point) => point.y));
-            const palette = ["#1b1c21", violet, green];
+            const palette = [black, navy, signal];
             paths.forEach((path, i) => {
               const pts = mapped(path, c, maxX, maxY);
               linePath(pts, palette[i], 2.2 - i * 0.2);
@@ -279,16 +318,16 @@ export function TrajectoryField() {
             const maxY = Math.max(...paths.flat().map((point) => point.y));
             paths.forEach((path, i) => {
               const pts = mapped(path, c, maxX, maxY);
-              linePath(pts, i === 0 ? coral : violet, 2.2, false);
+              linePath(pts, i === 0 ? black : navy, 2.2, false);
               const apex = pts.reduce((best, point) => (point.y < best.y ? point : best), pts[0]);
               p.push();
-              p.stroke(i === 0 ? "#f0a8ad" : "#b6aaf5");
+              p.stroke(i === 0 ? offWhite : powder);
               p.strokeWeight(1);
               (p.drawingContext as CanvasRenderingContext2D).setLineDash([3, 5]);
               p.line(apex.x, apex.y, apex.x, c.y + c.h);
               (p.drawingContext as CanvasRenderingContext2D).setLineDash([]);
               p.pop();
-              movingNode(pts, (t * 0.16 + i * 0.28) % 1, i === 0 ? coral : violet, 6);
+              movingNode(pts, (t * 0.16 + i * 0.28) % 1, i === 0 ? black : navy, 6);
             });
           });
         };
@@ -298,16 +337,16 @@ export function TrajectoryField() {
           roundedClip(rect, () => {
             const c = graphFrame(rect, 5);
             const pts = mapped(projectile(52, 18), c);
-            linePath(pts, "#a4a8b2", 1, true);
+            linePath(pts, navy, 1, true);
 
             for (let i = 0; i < 12; i += 1) {
               const progress = i / 11;
               const point = pts[Math.floor(progress * (pts.length - 1))];
               const pulse = 0.5 + 0.5 * Math.sin(t * 4.2 - progress * TAU * 1.6);
               p.noStroke();
-              p.fill(p.color(cyan + Math.round(30 + pulse * 80).toString(16).padStart(2, "0")));
+              p.fill(p.color(powder + Math.round(30 + pulse * 80).toString(16).padStart(2, "0")));
               p.circle(point.x, point.y, 4 + pulse * 7);
-              p.fill(cyan);
+              p.fill(navy);
               p.circle(point.x, point.y, 3.2);
             }
 
@@ -315,7 +354,7 @@ export function TrajectoryField() {
             const index = Math.floor(progress * (pts.length - 1));
             const head = pts[index];
             p.push();
-            p.stroke(cyan);
+            p.stroke(navy);
             p.strokeWeight(2.5);
             for (let j = 1; j < 8; j += 1) {
               const previous = pts[Math.max(0, index - j)];
@@ -323,7 +362,7 @@ export function TrajectoryField() {
               p.line(previous.x, previous.y, head.x, head.y);
             }
             p.pop();
-            movingNode(pts, progress, acid, 8);
+            movingNode(pts, progress, signal, 8);
           });
         };
 
@@ -333,7 +372,7 @@ export function TrajectoryField() {
             const c = graphFrame(rect, 5);
             const source = projectile(49, 18);
             const pts = mapped(source, c);
-            linePath(pts, "#747985", 1.25, true);
+            linePath(pts, powder, 1.25, true);
             const wobble = 0.86 + 0.14 * Math.sin(t * 1.8);
 
             for (let i = 0; i < 7; i += 1) {
@@ -344,11 +383,11 @@ export function TrajectoryField() {
               const vx = Math.min(rect.w * 0.095, Math.abs(velocity.vx ?? 0) * 1.15) * wobble;
               const vy = -(velocity.vy ?? 0) * 1.1 * wobble;
               p.noStroke();
-              p.fill(paper);
+              p.fill(white);
               p.circle(point.x, point.y, 4);
-              arrow(point.x, point.y, point.x + vx, point.y, cyan, 1.1);
-              arrow(point.x + vx, point.y, point.x + vx, point.y + vy, coral, 1.1);
-              arrow(point.x, point.y, point.x + vx, point.y + vy, acid, 1.8);
+              arrow(point.x, point.y, point.x + vx, point.y, powder, 1.1);
+              arrow(point.x + vx, point.y, point.x + vx, point.y + vy, white, 1.1);
+              arrow(point.x, point.y, point.x + vx, point.y + vy, signal, 1.8);
             }
           });
         };
@@ -373,7 +412,7 @@ export function TrajectoryField() {
             if (age >= 0 && age < 1.3 && impact.x > rect.x && impact.x < rect.x + rect.w) {
               p.push();
               p.noFill();
-              p.stroke(acid);
+              p.stroke(signal);
               p.strokeWeight(1.5);
               p.circle(impact.x, impact.y, age * 70);
               p.pop();
@@ -398,7 +437,7 @@ export function TrajectoryField() {
 
         p.draw = () => {
           const t = reducedMotion ? 1.4 : p.millis() / 1000;
-          p.background(ink);
+          p.background(black);
           const [a, b, c, d, e, f] = panels();
           drawFan(a, t);
           drawDrag(b, t);
@@ -411,7 +450,7 @@ export function TrajectoryField() {
           if (age >= 0 && age < 0.8) {
             p.push();
             p.noFill();
-            p.stroke("#ffffff88");
+            p.stroke(powder + "99");
             p.strokeWeight(1);
             p.circle(impact.x, impact.y, age * 42);
             p.pop();

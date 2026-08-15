@@ -1,8 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #111216;
-  --paper: #f2f0e9;
+  --ink: #000000;
+  --navy: #305579;
+  --powder: #bcd4e4;
+  --gray: #e4e4e4;
+  --off-white: #f5f5f5;
+  --paper: #ffffff;
+  --signal: #e1fe0e;
 }
 
 * {

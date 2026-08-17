@@ -16,6 +16,8 @@ type ActivePage =
   | "traffic"
   | "airspace"
   | "plotter"
+  | "vector"
+  | "syntax"
   | "radar"
   | "drum"
   | "pulse"
@@ -36,13 +38,13 @@ export function SiteNavigation({
   const [shaderPanelOpen, setShaderPanelOpen] = useState(false);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem("trajectory-shader-settings-v2");
+    const saved = window.localStorage.getItem("trajectory-shader-settings-v3");
     if (saved) {
       try {
         const settings = JSON.parse(saved) as { enabled?: boolean };
         queueMicrotask(() => setShaderEnabled(settings.enabled !== false));
       } catch {
-        window.localStorage.removeItem("trajectory-shader-settings-v2");
+        window.localStorage.removeItem("trajectory-shader-settings-v3");
       }
     }
 
@@ -100,6 +102,12 @@ export function SiteNavigation({
           </a>
           <a className={active === "plotter" ? "is-active" : ""} href={routeHref("plotter")}>
             Plotter
+          </a>
+          <a className={active === "vector" ? "is-active" : ""} href={routeHref("vector")}>
+            Vector
+          </a>
+          <a className={active === "syntax" ? "is-active" : ""} href={routeHref("syntax")}>
+            Syntax
           </a>
           <a className={active === "radar" ? "is-active" : ""} href={routeHref("radar")}>
             Radar

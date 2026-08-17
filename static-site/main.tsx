@@ -11,9 +11,11 @@ import { PulseField } from "../app/pulse/pulse-field";
 import { RadarField } from "../app/radar/radar-field";
 import { ShaderEffects } from "../app/shader-effects";
 import { SiteNavigation } from "../app/site-navigation";
+import { SyntaxField } from "../app/syntax/syntax-field";
 import { TerrainField } from "../app/terrain/terrain-field";
 import { TrafficField } from "../app/traffic/traffic-field";
 import { TrajectoryField } from "../app/trajectory-field";
+import { VectorField } from "../app/vector/vector-field";
 
 const ROUTE_TITLES: Record<string, string> = {
   "": "Trajectory Field",
@@ -23,6 +25,8 @@ const ROUTE_TITLES: Record<string, string> = {
   traffic: "Traffic — Trajectory Field",
   airspace: "Airspace — Trajectory Field",
   plotter: "Plotter — Trajectory Field",
+  vector: "Vector — Trajectory Field",
+  syntax: "Syntax — Trajectory Field",
   radar: "Radar — Trajectory Field",
   drum: "Drum — Trajectory Field",
   pulse: "Pulse — Trajectory Field",
@@ -55,6 +59,8 @@ function Route() {
     case "traffic": return <main><TrafficField /></main>;
     case "airspace": return <main><AirspaceField /></main>;
     case "plotter": return <main><PlotterField /></main>;
+    case "vector": return <main><VectorField /></main>;
+    case "syntax": return <main><SyntaxField /></main>;
     case "radar": return <main><RadarField /></main>;
     case "drum": return <main><DrumField /></main>;
     case "pulse": return <main><PulseField /></main>;

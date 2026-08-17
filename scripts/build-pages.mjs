@@ -14,8 +14,10 @@ const routes = [
   "plotter",
   "pulse",
   "radar",
+  "syntax",
   "terrain",
   "traffic",
+  "vector",
 ];
 
 await Promise.all(routes.map(async (route) => {

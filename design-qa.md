@@ -1,3 +1,69 @@
+# Vector field design QA
+
+## Evidence
+
+- Source visual truth: `/Users/haggylap/Library/CloudStorage/Dropbox/!Projects/Aircover/trajectory-lab/design-reference-vector-field.png`
+- Browser-rendered implementation: `/Users/haggylap/Library/CloudStorage/Dropbox/!Projects/Aircover/trajectory-lab/vector-implementation-final.jpg`
+- Normalized implementation crop: `/Users/haggylap/Library/CloudStorage/Dropbox/!Projects/Aircover/trajectory-lab/vector-implementation-crop.jpg`
+- Side-by-side comparison: `/Users/haggylap/Library/CloudStorage/Dropbox/!Projects/Aircover/trajectory-lab/vector-design-comparison.jpg`
+- Route: `http://localhost:3000/vector`
+- Viewport: 1080 × 1140 CSS px at device scale factor 1. The persistent 60 px navigation was removed from the implementation evidence for a 1080 × 1080 content comparison.
+- Source pixels: 1080 × 1080. Normalized implementation pixels: 1080 × 1080. No density scaling was required.
+- State: default 22-density field, direction arrows and moving points enabled, axes and critical-point markers hidden, global brand FX active.
+
+## Full-view comparison evidence
+
+The source and final implementation were opened together in one 2184 × 1140 comparison image. Both resolve as square white scientific fields with a thin calibrated perimeter, five labeled coordinate values, one converging left node, one diverging right node, broad curved left trajectories, a tight central bridge, and a radial right fan. The implementation intentionally translates the source's violet ink into the established navy/powder/signal palette and preserves the shared global dither treatment.
+
+## Focused-region comparison evidence
+
+A separate focused crop was unnecessary because the source and implementation are both 1080 px square and the complete path geometry, arrowheads, ticks, scale labels, and node whitespace remain individually legible in the native-size side-by-side comparison. The controls are outside the source visual target and were verified independently through their rendered semantics and state changes.
+
+## Required fidelity surfaces
+
+- Fonts and typography: scale labels use a compact system monospace at the same low hierarchy as the reference. Shared navigation retains the established Geist interface style; the field itself contains no title or explanatory copy.
+- Spacing and layout rhythm: the plot remains square, centered, and generously inset below navigation. The border, tick rhythm, coordinate range, and perimeter whitespace closely match the source.
+- Colors and visual tokens: source violet is intentionally normalized to navy, powder, white, ink, and one small signal-yellow moving point. No gradients or new accent colors were introduced.
+- Image quality and asset fidelity: the field is native Canvas2D geometry sampled from a continuous two-node differential system, not a raster recreation. Curves, arrowheads, ticks, and particles remain resolution-independent and responsive.
+- Copy and content: the graph uses only coordinate values. Controls use concise functional labels for the layers and parameters they change.
+
+## Findings
+
+- No actionable P0, P1, or P2 findings remain.
+- P3: the active global dither makes navy lines slightly more granular and lighter than the solid violet reference. This is an intentional system-level treatment and can be bypassed with the existing FX control.
+- P3: moving navy/powder points and one signal-yellow point are intentional brand additions; they can be hidden independently without changing streamline geometry.
+
+## Interaction and runtime checks
+
+- The Controls trigger opens and closes the Vector Controls panel.
+- Streamlines, direction arrows, axis lines, frame and ticks, scale labels, critical points, moving points, and motion are independently toggleable.
+- Hide all disabled every visual layer while leaving motion state intact; Show all restored every visual layer.
+- An individual Axis Lines toggle changed state correctly, and Reset restored axes off, critical points off, and density 22.
+- Density, stroke, and speed ranges expose live values; Speed disables when Motion is off.
+- Escape closes the panel, settings persist locally, and reduced-motion mode freezes the animated markers.
+- Navigation remains usable at the 1080 px verification width because the page list now scrolls within its own track while Controls and FX stay visible.
+- Browser console verification after the final production build returned no errors.
+
+## Comparison history
+
+- Iteration 1 — P1 route usability: the additional navigation item pushed Controls and FX out of the 1080 px viewport. Fix: changed the navigation grid to a bounded middle track with horizontal page scrolling. Post-fix evidence: both actions remain fully visible in `vector-implementation-final.jpg`.
+- Iteration 1 — P2 streamline distribution: critical-point ring seeding over-concentrated lines between the nodes and left large areas empty. Fix: replaced it with deterministic occupancy-grid seeding and bidirectional integration. Post-fix evidence: the field now has even plot-wide coverage.
+- Iteration 2 — P2 field silhouette: the symmetric polynomial field produced large vertical ovals unlike the reference's asymmetrical left lobe and right fan. Fix: retained the two nodes while weighting outer-left horizontal velocity and right-side divergence. Post-fix evidence: `vector-design-comparison.jpg` shows the broad curved left trajectories, central bridge, and radial right trajectories together.
+- Iteration 3 — P2 reference hierarchy: visible axis lines and critical-point circles added structure absent from the source. Fix: kept both as user-toggleable layers but changed their defaults to hidden, then enlarged the functional arrowheads and primary streamline stroke.
+- Final comparison: no actionable P0/P1/P2 issues remain at the normalized 1080 × 1080 comparison state.
+
+## Implementation checklist
+
+- [x] Add a responsive Vector route and navigation destination.
+- [x] Render a continuous two-node flow field with streamline arrows and animated particles.
+- [x] Add independent visibility toggles, show/hide-all actions, reset, density, stroke, and speed controls.
+- [x] Preserve the shared palette, FX processor, cursor trail, reduced-motion behavior, and static GitHub Pages routing.
+- [x] Verify build output, interaction states, visual fidelity, accessible control names, and clean browser logs.
+
+final result: passed
+
+---
+
 # Global shader-layer design QA
 
 ## Evidence

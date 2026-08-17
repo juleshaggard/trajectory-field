@@ -136,6 +136,22 @@ Signal yellow is the only accent. Do not expand it into large backgrounds, gradi
 - White and off-white carry the modules. Ink defines primary calibration; navy sets structural lines; powder and gray provide secondary measurement; one signal-yellow index identifies the live bearing.
 - Perimeter scales remain fixed while a bearing line and index advance smoothly. Reduced-motion mode freezes every module at a representative calibrated state.
 
+## Kinetic syntax fields
+
+- Syntax uses Basel Classic for both primary words and compact tracking telemetry. If the licensed face is not installed, Basel and Helvetica Neue are the approved metric fallbacks.
+- Words behave as measured nodes rather than editorial headlines. Thin connectors terminate at the live text bounds and continuously follow each word through one shared rhythmic cycle.
+- Optical blob detection locks onto changing letter clusters inside the moving words. Navy corner brackets follow the measured fragment bounds while compact confidence, velocity, and coordinate data remain attached to each acquisition.
+- Tracking boxes flash in short asynchronous bursts while word motion remains smooth and periodic. One signal-yellow target indicates the active acquisition; no glow, gradient, or decorative texture is added.
+- Extended syntax pages are built as a sequence of full-width, full-viewport white motion studies without background grids. Straight, bowed, orbital, loop-de-loop, orthogonal, and sampled wave connectors create distinct trajectories while tracking density ranges from none to three acquisitions per field.
+- Every study runs on its own rhythmic phase and pauses outside the viewport. This preserves smooth 60 fps motion in the visible field without flattening the intentional variation between modules.
+
+## Vector flow fields
+
+- Vector instruments use continuous streamlines sampled from a two-node differential field. The default system has one stable node at `(-1, 0)` and one unstable node at `(1, 0)`, with weighted outer velocities that preserve the reference field's broad converging left lobe and tighter diverging right fan.
+- White is the only field surface. Navy carries streamlines and direction arrows; ink defines the perimeter frame; powder and signal yellow are reserved for moving trace points.
+- Streamlines, arrows, axes, frame ticks, scale labels, critical points, and particles are independent layers. Each may be hidden without changing the underlying field geometry.
+- Density, stroke, and motion speed use the shared graph-control ranges. Reduced-motion mode freezes every trace at a representative state.
+
 ## Radial drum instruments
 
 - Build the drum as a shallow physical cylinder with its measurement face angled toward the camera. The edge thickness must stay visible so the dial reads as an object, not a flat chart.
@@ -150,7 +166,7 @@ Signal yellow is the only accent. Do not expand it into large backgrounds, gradi
 - A single viewport-level WebGL post-processing pass samples the active visualization canvas and renders its transformed pixels in place. It starts below the 60 px navigation, never intercepts pointer input, and must not alter graph geometry or layout.
 - The shader must derive every mark from the source canvas. It may not draw a disconnected decorative pattern over the page. Halftone density follows source luminance, pixel mode resamples source cells, scanlines modulate source pixels, and ordered dither thresholds the source image.
 - Supported treatments are halftone, pixel matrix, scanline, and ordered dither. Each is a GLSL ES 3.00 / WebGL2 fragment-shader transformation using integer texel fetches, derivative-aware edges, color quantization, and an 8 × 8 Bayer threshold matrix, so the treatment responds to live p5.js, Three.js, and canvas-backed instrument frames.
-- Default treatment is a high-definition navy halftone in overlay mode: 10 px cells, 72% strength, 94% edge hardness, 0% grain, 67° angle, and 7% motion. Ink is the neutral option; signal yellow is available for deliberate CRT/radar states but should not be the default.
+- Default treatment is high-definition navy ordered dither in overlay mode: 10 px cells, 72% strength, 94% edge hardness, 0% grain, 67° angle, and 7% motion. Ink is the neutral option; signal yellow is available for deliberate CRT/radar states but should not be the default.
 - Editable parameters: enable/bypass, pattern, cell size, strength, edge hardness, grain, angle, motion, ink color, and blend mode. Preferences persist locally across routes.
 - The overlay respects reduced-motion preferences by freezing time-based jitter while preserving the selected static texture.
 - Shader controls live in the shared navigation under `FX`. The panel is compact, technical, and keyboard accessible. Opening `FX` closes graph-specific controls and vice versa so the two dense menus never obscure one another on compact screens.
@@ -173,11 +189,12 @@ Signal yellow is the only accent. Do not expand it into large backgrounds, gradi
 
 ## Navigation and controls
 
-- Sticky 60 px navigation ordered as Trajectory, Compass, Terrain, Map, Traffic, Airspace, Plotter, Radar, Drum, Pulse, Atlas, Blank, and Archive. Archive always remains the final destination.
+- Sticky 60 px navigation ordered as Trajectory, Compass, Terrain, Map, Traffic, Airspace, Plotter, Vector, Syntax, Radar, Drum, Pulse, Atlas, Blank, and Archive. Archive always remains the final destination.
 - Blank is a true empty white canvas that retains only the shared navigation, cursor, and FX system.
 - Active destination uses a thin navy underline.
 - Graph controls live in one compact floating panel and persist between graph pages.
 - Supported controls: background grid, axis lines, axis arrows, moving points, motion, speed, stroke, grid density, and plot background.
+- Default graph state hides the background grid, axis lines, and axis arrows; keeps moving points and motion active; uses 1× speed, 1× stroke, grid density 6, and a white plot surface.
 - Buttons use short labels, clear focus states, and a 1 px downward active response.
 
 ## Responsive behavior

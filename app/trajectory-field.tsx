@@ -21,16 +21,17 @@ type Settings = {
 };
 
 const TAU = Math.PI * 2;
+const CONTROLS_STORAGE_KEY = "trajectory-field-controls-v2";
 const DEFAULT_SETTINGS: Settings = {
-  grid: true,
-  axisLines: true,
-  axisArrows: true,
+  grid: false,
+  axisLines: false,
+  axisArrows: false,
   particles: true,
   motion: true,
   speed: 1,
   stroke: 1,
   gridDensity: 6,
-  background: "alternating",
+  background: "white",
 };
 
 export function TrajectoryField({ collection }: { collection: Collection }) {
@@ -40,19 +41,19 @@ export function TrajectoryField({ collection }: { collection: Collection }) {
   const [controlsOpen, setControlsOpen] = useState(false);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem("trajectory-field-controls");
+    const saved = window.localStorage.getItem(CONTROLS_STORAGE_KEY);
     if (!saved) return;
     try {
       const restored = { ...DEFAULT_SETTINGS, ...(JSON.parse(saved) as Partial<Settings>) };
       queueMicrotask(() => setSettings(restored));
     } catch {
-      window.localStorage.removeItem("trajectory-field-controls");
+      window.localStorage.removeItem(CONTROLS_STORAGE_KEY);
     }
   }, []);
 
   useEffect(() => {
     settingsRef.current = settings;
-    window.localStorage.setItem("trajectory-field-controls", JSON.stringify(settings));
+    window.localStorage.setItem(CONTROLS_STORAGE_KEY, JSON.stringify(settings));
   }, [settings]);
 
   const setSetting = <Key extends keyof Settings>(key: Key, value: Settings[Key]) => {

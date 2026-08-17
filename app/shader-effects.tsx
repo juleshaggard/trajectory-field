@@ -19,11 +19,11 @@ type ShaderSettings = {
   speed: number;
 };
 
-const STORAGE_KEY = "trajectory-shader-settings-v2";
+const STORAGE_KEY = "trajectory-shader-settings-v3";
 
 const DEFAULT_SETTINGS: ShaderSettings = {
   enabled: true,
-  mode: "halftone",
+  mode: "dither",
   color: "navy",
   blend: "overlay",
   cellSize: 10,
